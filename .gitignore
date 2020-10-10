@@ -1,0 +1,5 @@
+.venv
+.vscode
+
+*__.json
+__pychache__
