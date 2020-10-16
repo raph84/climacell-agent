@@ -2,3 +2,4 @@ flask ~= 1.1.2
 requests ~= 2.24.0
 google-cloud-pubsub ~= 2.1.0
 google-cloud-secret-manager ~= 2.0.0
+google-cloud-storage ~= 1.22
