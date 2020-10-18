@@ -90,32 +90,6 @@ request_headers = {
 climacell_url_realtime = "https://api.climacell.co/v3/weather/realtime"
 climacell_url_hourly = "https://api.climacell.co/v3/weather/forecast/hourly"
 
-
-def access_secret_version(project_id, secret_id, version_id):
-    """
-    Access the payload for the given secret version if one exists. The version
-    can be a version number as a string (e.g. "5") or an alias (e.g. "latest").
-    """
-
-    # Import the Secret Manager client library.
-
-
-    # Create the Secret Manager client.
-    client = secretmanager.SecretManagerServiceClient()
-
-    # Build the resource name of the secret version.
-    name = f"projects/{project_id}/secrets/{secret_id}/versions/{version_id}"
-
-    # Access the secret version.
-    response = client.access_secret_version(request={"name": name})
-
-    # Print the secret payload.
-    #
-    # WARNING: Do not print the secret in a production environment - this
-    # snippet is showing how to access the secret material.
-    payload = response.payload.data.decode("UTF-8")
-    return payload
-
 def pubsub(json_payload,mode_data):
     futures = dict()
 
@@ -178,6 +152,13 @@ def hourly():
     return json.dumps(response_hourly.json(), indent=4, sort_keys=True)
 
 
+@app.route('/store/realtime/', methods=['GET'])
+def store_realtime_get():
+    blobs = list(storage_client.list_blobs(bucket, prefix='realtime'))
+    print (blobs[-1])
+    return str(blobs)
+
+
 @app.route('/store/realtime/', methods=['POST'])
 def store_realtime():
     envelope = request.get_json()
@@ -197,7 +178,7 @@ def store_realtime():
     if isinstance(pubsub_message, dict) and 'data' in pubsub_message:
         payload = base64.b64decode(pubsub_message['data']).decode('utf-8').strip()
 
-    filename = "realtime-" + datetime.now().strftime("%m%d%Y-%H%M%S")
+    filename = "realtime-" + datetime.now().strftime("%Y%m%d-%H%M%S")
     create_file(payload, filename)
 
     return ('', 204)
@@ -223,7 +204,7 @@ def store_hourly():
         payload = base64.b64decode(
             pubsub_message['data']).decode('utf-8').strip()
 
-    filename = "hourly-" + datetime.now().strftime("%m%d%Y-%H%M%S")
+    filename = "hourly-" + datetime.now().strftime("%Y%m%d-%H%M%S")
     create_file(payload, filename)
 
     return ('', 204)
