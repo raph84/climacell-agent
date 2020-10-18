@@ -155,8 +155,9 @@ def hourly():
 @app.route('/store/realtime/', methods=['GET'])
 def store_realtime_get():
     blobs = list(storage_client.list_blobs(bucket, prefix='realtime'))
-    print (blobs[-1])
-    return str(blobs)
+    print ("GET latest climacell realtime : "+str(blobs[-1]))
+    json = blobs[-1].download_as_string()
+    return json
 
 
 @app.route('/store/realtime/', methods=['POST'])
@@ -182,6 +183,14 @@ def store_realtime():
     create_file(payload, filename)
 
     return ('', 204)
+
+
+@app.route('/store/hourly/', methods=['GET'])
+def store_hourly_get():
+    blobs = list(storage_client.list_blobs(bucket, prefix='hourly'))
+    print("GET latest climacell hourly : " + str(blobs[-1]))
+    json = blobs[-1].download_as_string()
+    return json
 
 
 @app.route('/store/hourly/', methods=['POST'])
