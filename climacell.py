@@ -151,13 +151,34 @@ def hourly():
 
     return json.dumps(response_hourly.json(), indent=4, sort_keys=True)
 
+def last_range(last):
+    if last != 1:
+        last = range(-1, 0 - int(last) - 1, -1)
+    else:
+        last = range(-1, -2, -1)
+
+    return last
+
+def last_json(last,blobs):
+    last_json = []
+    for i in last:
+        j = json.loads(blobs[i].download_as_string())
+        if isinstance(j, list):
+            for item in j:
+                last_json.append(item)
+        else:
+            last_json.append(j)
+    return last_json
+
 
 @app.route('/store/realtime/', methods=['GET'])
 def store_realtime_get():
+    last = request.args.get('last', 1)
+    last = last_range(last)
     blobs = list(storage_client.list_blobs(bucket, prefix='realtime'))
-    print ("GET latest climacell realtime : "+str(blobs[-1]))
-    json = blobs[-1].download_as_string()
-    return json
+    print("GET latest climacell realtime : " + str(blobs[-1]))
+    _json = last_json(last,blobs)
+    return json.dumps(_json)
 
 
 @app.route('/store/realtime/', methods=['POST'])
@@ -187,10 +208,12 @@ def store_realtime():
 
 @app.route('/store/hourly/', methods=['GET'])
 def store_hourly_get():
+    last = request.args.get('last', 1)
+    last = last_range(last)
     blobs = list(storage_client.list_blobs(bucket, prefix='hourly'))
     print("GET latest climacell hourly : " + str(blobs[-1]))
-    json = blobs[-1].download_as_string()
-    return json
+    _json = last_json(last, blobs)
+    return json.dumps(_json)
 
 
 @app.route('/store/hourly/', methods=['POST'])
