@@ -1,0 +1,36 @@
+POST http://localhost:8080/store/realtime/ HTTP/1.1
+content-type: application/json
+
+{
+    "name": "sample",
+    "time": "Wed, 21 Oct 2015 18:27:50 GMT"
+}
+
+
+
+POST https://climacell-agent-ppb6otnevq-uk.a.run.app/store/realtime/ HTTP/1.1
+content-type: application/json
+
+{
+    "name": "sample",
+    "time": "Wed, 21 Oct 2015 18:27:50 GMT"
+}
+
+GET http://127.0.0.1:5002/store/realtime/?last=2 HTTP/1.1
+content-type: application/json
+
+GET http://127.0.0.1:5002/store/hourly/?last=5 HTTP/1.1
+content-type: application/json
+
+GET http://127.0.0.1:5002/store/list/realtime/ HTTP/1.1
+content-type: application/json
+
+GET http://127.0.0.1:5002/store/list/hourly/ HTTP/1.1
+content-type: application/json
+
+GET http://127.0.0.1:5002/store/realtime/?start=realtime-20201116-001503&end=realtime-20201115-101503 HTTP/1.1
+content-type: application/json
+
+
+GET http://127.0.0.1:5002/store/hourly/?start=hourly-20201116-160003&end=hourly-20201116-160003 HTTP/1.1
+content-type: application/json
