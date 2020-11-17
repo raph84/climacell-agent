@@ -21,7 +21,6 @@ project_id = os.environ['PROJECT_ID']
 topic_id = os.environ['TOPIC_ID']
 
 app = Flask(__name__)
-app.config["DEBUG"] = True
 
 
 def create_file(payload, filename):
@@ -122,6 +121,22 @@ def pubsub(json_payload,mode_data):
     while futures:
         time.sleep(1)
 
+
+def get_metric_list_from_bucket(pre):
+    blobs = list(storage_client.list_blobs(bucket, prefix=pre))
+    metric_list = []
+    for _b in blobs:
+        datestr = ' '.join(_b.name.rsplit('-', 2)[1:3])
+        try:
+            #dateobj = datetime.strptime(filename, "%Y%m%d %H%M%S")
+            item = {"name": _b.name, "dateobj": datestr}
+            metric_list.append(item)
+        except ValueError:
+            pass
+
+    return metric_list
+
+
 @app.route('/realtime/', methods=['GET'])
 def realtime():
 
@@ -164,21 +179,65 @@ def last_json(last,blobs):
     for i in last:
         j = json.loads(blobs[i].download_as_string())
         if isinstance(j, list):
+            # For hourly forecast, one blob contain several days
+            # We need to split them in order to replicate the
+            # same structure we have with realtime.
             for item in j:
+                item['name'] = blobs[i].name
                 last_json.append(item)
         else:
+            # For realtime data, one day is already in a single object
+            j['name'] = blobs[i].name
             last_json.append(j)
     return last_json
+
+def range_start_end(blobs, file_start, file_end):
+    x_start = None
+    x_end = None
+
+    x = -1
+    reverse = blobs[::-1]
+    for _b in reverse:
+        if _b.name == file_start:
+            x_start = x
+        if _b.name == file_end:
+            x_end = x
+
+        x = x - 1
+
+        if x_start != None and x_end != None:
+            break
+
+    if x_start == x_end:
+        x_end = x_end - 1
+
+    last = range(x_start, x_end, -1)
+
+    return last
 
 
 @app.route('/store/realtime/', methods=['GET'])
 def store_realtime_get():
     last = request.args.get('last', 1)
-    last = last_range(last)
+    file_start = request.args.get('start', None)
+    file_end = request.args.get('end', None)
+
     blobs = list(storage_client.list_blobs(bucket, prefix='realtime'))
-    print("GET latest climacell realtime : " + str(blobs[-1]))
+    if file_start != None and file_end != None:
+        print("Get from {} to {}.".format(file_start,file_end))
+        last = range_start_end(blobs, file_start, file_end)
+
+    else:
+        last = last_range(last)
+
     _json = last_json(last,blobs)
     return json.dumps(_json)
+
+
+@app.route('/store/list/realtime/', methods=['GET'])
+def store_list_realtime_get():
+    realtime_list = get_metric_list_from_bucket("realtime")
+    return json.dumps(realtime_list)
 
 
 @app.route('/store/realtime/', methods=['POST'])
@@ -208,12 +267,26 @@ def store_realtime():
 
 @app.route('/store/hourly/', methods=['GET'])
 def store_hourly_get():
+    file_start = request.args.get('start', None)
+    file_end = request.args.get('end', None)
     last = request.args.get('last', 1)
-    last = last_range(last)
+
     blobs = list(storage_client.list_blobs(bucket, prefix='hourly'))
-    print("GET latest climacell hourly : " + str(blobs[-1]))
+    if file_start != None and file_end != None:
+        print("Get from {} to {}.".format(file_start, file_end))
+        last = range_start_end(blobs, file_start, file_end)
+    else:
+        last = last_range(last)
+
+
     _json = last_json(last, blobs)
     return json.dumps(_json)
+
+
+@app.route('/store/list/hourly/', methods=['GET'])
+def store_list_hourly_get():
+    hourly_list = get_metric_list_from_bucket("hourly")
+    return json.dumps(hourly_list)
 
 
 @app.route('/store/hourly/', methods=['POST'])
