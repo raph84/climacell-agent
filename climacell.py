@@ -10,7 +10,6 @@ from google.cloud import storage
 import base64
 from yadt import scan_and_apply_tz
 
-from utils import utc_to_toronto
 
 # Instantiates a client
 storage_client = storage.Client()
