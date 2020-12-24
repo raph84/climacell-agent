@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import math
 from pytz import timezone
 import pytz
-import pandas as pd
 from dateutil.parser import parse
 
 tz = timezone('America/Toronto')
