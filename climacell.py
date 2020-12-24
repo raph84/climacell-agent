@@ -166,7 +166,7 @@ def hourly():
     print(response_hourly.status_code)
     # print(json.dumps(response_hourly.json(), indent=4, sort_keys=True))
 
-    _json = scan_and_apply_tz(response_realtime.json())
+    _json = scan_and_apply_tz(response_hourly.json())
 
     pubsub(json.dumps(_json),'hourly')
 
