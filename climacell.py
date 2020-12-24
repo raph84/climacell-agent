@@ -8,6 +8,9 @@ from datetime import datetime
 from google.cloud import secretmanager
 from google.cloud import storage
 import base64
+from yadt import scan_and_apply_tz
+
+from utils import utc_to_toronto
 
 # Instantiates a client
 storage_client = storage.Client()
@@ -147,7 +150,9 @@ def realtime():
     print(response_realtime.status_code)
     # print(json.dumps(response_realtime.json(), indent=4, sort_keys=True))
 
-    pubsub(json.dumps(response_realtime.json()),'realtime')
+    _json = scan_and_apply_tz(response_realtime.json())
+
+    pubsub(json.dumps(_json),'realtime')
 
     return json.dumps(response_realtime.json(), indent=4, sort_keys=True)
 
@@ -162,7 +167,9 @@ def hourly():
     print(response_hourly.status_code)
     # print(json.dumps(response_hourly.json(), indent=4, sort_keys=True))
 
-    pubsub(json.dumps(response_hourly.json()),'hourly')
+    _json = scan_and_apply_tz(response_realtime.json())
+
+    pubsub(json.dumps(_json),'hourly')
 
     return json.dumps(response_hourly.json(), indent=4, sort_keys=True)
 
@@ -178,6 +185,7 @@ def last_json(last,blobs):
     last_json = []
     for i in last:
         j = json.loads(blobs[i].download_as_string())
+        j = scan_and_apply_tz(j)
         if isinstance(j, list):
             # For hourly forecast, one blob contain several days
             # We need to split them in order to replicate the
